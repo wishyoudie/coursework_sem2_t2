@@ -2,8 +2,8 @@ package coursework.sem2.t2;
 
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -11,43 +11,15 @@ import static org.junit.jupiter.api.Assertions.*;
  * Grep tests class
  */
 class GrepTest {
-
-    /**
-     * Get result of running Grep with specified argument list
-     * @param args Console argument list
-     * @return Console output
-     */
-    String getGrepConsoleOutput(String[] args) {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-
-        PrintStream old = System.out;
-        PrintStream ps = new PrintStream(byteArrayOutputStream);
-        System.setOut(ps);
-        Grep.main(args);
-        System.out.flush();
-        System.setOut(old);
-
-        return byteArrayOutputStream.toString();
-    }
-
     /**
      * Test Grep with no console options
      */
     @Test
     void testWithNoOptions() {
-        String[] args = {"Как", "input_test.txt"};
-        String actual = getGrepConsoleOutput(args);
-        ByteArrayOutputStream expected = new ByteArrayOutputStream();
-
-        PrintStream old = System.out;
-        PrintStream ps = new PrintStream(expected);
-        System.setOut(ps);
-        System.out.println("Как называют православного программиста?");
-
-        System.out.flush();
-        System.setOut(old);
-
-        assertEquals(expected.toString(), actual);
+        String[] args = {"Как", "./src/test/resources/input_test.txt"};
+        List<String> expected = new ArrayList<>();
+        expected.add("Как называют православного программиста?");
+        assertEquals(expected, new Grep(args).getResult());
     }
 
     /**
@@ -55,20 +27,11 @@ class GrepTest {
      */
     @Test
     void testReversedFlag() {
-        String[] args = {"-v", ".", "input_test.txt"};
-        String actual = getGrepConsoleOutput(args);
-        ByteArrayOutputStream expected = new ByteArrayOutputStream();
-
-        PrintStream old = System.out;
-        PrintStream ps = new PrintStream(expected);
-        System.setOut(ps);
-        System.out.println("Как называют православного программиста?");
-        System.out.println("Кодило");
-
-        System.out.flush();
-        System.setOut(old);
-
-        assertEquals(expected.toString(), actual);
+        String[] args = {"-v", ".", "./src/test/resources/input_test.txt"};
+        List<String> expected = new ArrayList<>();
+        expected.add("Как называют православного программиста?");
+        expected.add("Кодило");
+        assertEquals(expected, new Grep(args).getResult());
     }
 
     /**
@@ -76,22 +39,13 @@ class GrepTest {
      */
     @Test
     void testIgnoredCaseFlag() {
-        String[] args = {"-i", "А", "input_test.txt"};
-        String actual = getGrepConsoleOutput(args);
-        ByteArrayOutputStream expected = new ByteArrayOutputStream();
-
-        PrintStream old = System.out;
-        PrintStream ps = new PrintStream(expected);
-        System.setOut(ps);
-        System.out.println("Как называют православного программиста?");
-        System.out.println(". Точка 1");
-        System.out.println(". Точка 2.");
-        System.out.println(". А А А");
-
-        System.out.flush();
-        System.setOut(old);
-
-        assertEquals(expected.toString(), actual);
+        String[] args = {"-i", "А", "./src/test/resources/input_test.txt"};
+        List<String> expected = new ArrayList<>();
+        expected.add("Как называют православного программиста?");
+        expected.add(". Точка 1");
+        expected.add(". Точка 2.");
+        expected.add(". А А А");
+        assertEquals(expected, new Grep(args).getResult());
     }
 
     /**
@@ -99,19 +53,16 @@ class GrepTest {
      */
     @Test
     void testRegexFlag() {
-        String[] args = {"-r", "^(?:[^\\ ]+\\ ){3}", "input_test.txt"};
-        String actual = getGrepConsoleOutput(args);
-        ByteArrayOutputStream expected = new ByteArrayOutputStream();
+        String[] args = {"-r", "^(?:[^\\ ]+\\ ){3}", "./src/test/resources/input_test.txt"};
+        List<String> expected = new ArrayList<>();
+        expected.add("Как называют православного программиста?");
+        expected.add(". А А А");
+        assertEquals(expected, new Grep(args).getResult());
+    }
 
-        PrintStream old = System.out;
-        PrintStream ps = new PrintStream(expected);
-        System.setOut(ps);
-        System.out.println("Как называют православного программиста?");
-        System.out.println(". А А А");
-
-        System.out.flush();
-        System.setOut(old);
-
-        assertEquals(expected.toString(), actual);
+    @Test
+    void testRegexAndIgnoreFlagsIncompatibility() {
+        String[] args = {"-r", "-i", "^(?:[^\\ ]+\\ ){3}", "./src/test/resources/input_test.txt"};
+        assertEquals(new ArrayList<String>(), new Grep(args).getResult());
     }
 }

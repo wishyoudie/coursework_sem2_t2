@@ -1,6 +1,7 @@
 package coursework.sem2.t2;
 
 import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
@@ -30,7 +31,7 @@ public class Grep {
     /**
      * Changes logic from keyword to regular expression.
      */
-    @Option(name="-r",usage="Regex flag")
+    @Option(name="-r",usage="Regex flag", forbids={"-i"})
     private boolean useRegexFlag;
 
     /**
@@ -40,19 +41,35 @@ public class Grep {
     private String filter;
 
     /**
-     * Input file name argument.
+     * Input file argument.
      */
     @Argument(required = true, index = 1)
-    private String fileName;
+    private File file;
+
+    /**
+     * Result of grep filtration.
+     */
+    private List<String> result = new ArrayList<>();
+
+    /**
+     * Take account of reverse flag helper method.
+     * @param condition Condition to 'change' result of.
+     * @return New state of condition based on reverse flag value.
+     */
+    private boolean useReversedFlag(boolean condition) {
+        return condition ^ this.useReversedFlag;
+    }
 
     /**
      * Read lines from file, then filter them using provided command line arguments.
-     * @param inputName Input file name
-     * @throws IOException Throws if errors occurred while reading file
+     * @param input Input file.
+     * @return Resulting list of filtered lines.
+     * @throws IOException Throws if errors occurred while reading file.
      */
-    private void grep(String inputName) throws IOException {
-        try (BufferedReader br = new BufferedReader(new FileReader(inputName))) {
+    private List<String> run(File input) throws IOException {
+        try (BufferedReader br = new BufferedReader(new FileReader(input))) {
             List<String> lines = new ArrayList<>();
+            List<String> result = new ArrayList<>();
             String currentLine = br.readLine();
 
             while (currentLine != null) {
@@ -64,55 +81,63 @@ public class Grep {
                 Pattern pattern = Pattern.compile(filter);
                 for (String line : lines) {
                     Matcher matcher = pattern.matcher(line);
-                    if (matcher.find() ^ useReversedFlag) {
-                        System.out.println(line);
+                    if (useReversedFlag(matcher.find())) {
+                        result.add(line);
                     }
                 }
             } else {
                 if (useIgnoredCaseFlag) {
-                    String wordLowered = filter.toLowerCase();
+                    String filterLowered = filter.toLowerCase();
                     for (String line : lines) {
                         String lineLowered = line.toLowerCase();
-                        if (lineLowered.contains(wordLowered) ^ useReversedFlag) {
-                            System.out.println(line);
+                        if (useReversedFlag(lineLowered.contains(filterLowered))) {
+                            result.add(line);
                         }
                     }
                 } else {
                     for (String line : lines) {
-                        if (line.contains(filter) ^ useReversedFlag) {
-                            System.out.println(line);
+                        if (useReversedFlag(line.contains(filter))) {
+                            result.add(line);
                         }
                     }
                 }
             }
+            return result;
         }
     }
 
     /**
-     * Command line arguments parser.
-     * @param args Command line arguments
+     * Constructor from command line arguments.
+     * @param args Command line arguments.
      */
-    private void launch(String[] args) {
+    public Grep(String[] args) {
         CmdLineParser parser = new CmdLineParser(this);
 
         try {
             parser.parseArgument(args);
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-
-        try {
-            grep(String.format("./files/%s", fileName));
-        } catch (IOException e) {
+            this.result = run(file);
+        } catch (CmdLineException | IOException e) {
             System.err.println(e.getMessage());
         }
     }
 
     /**
+     * Grep result getter.
+     * @return Result of grep filtration.
+     */
+    public List<String> getResult() {
+        return this.result;
+    }
+
+    /**
      * Entry point.
-     * @param args Command line arguments
+     * @param args Command line arguments.
      */
     public static void main(String[] args) {
-        new Grep().launch(args);
+        Grep gr = new Grep(args);
+        List<String> list = gr.getResult();
+        for (String s : list) {
+            System.out.println(s);
+        }
     }
 }
