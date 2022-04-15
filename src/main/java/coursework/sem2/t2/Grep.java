@@ -47,62 +47,56 @@ public class Grep {
     private File file;
 
     /**
-     * Result of grep filtration.
+     * Add a string into a list while minding useReversedFlag helper method.
+     * @param condition A condition to be checked.
+     * @param list Result list.
+     * @param line Line to be added.
      */
-    private List<String> result = new ArrayList<>();
-
-    /**
-     * Take account of reverse flag helper method.
-     * @param condition Condition to 'change' result of.
-     * @return New state of condition based on reverse flag value.
-     */
-    private boolean useReversedFlag(boolean condition) {
-        return condition ^ this.useReversedFlag;
+    private void addConsideringReversedFlag(boolean condition, List<String> list, String line) {
+        if (condition ^ this.useReversedFlag)
+            list.add(line);
     }
 
     /**
      * Read lines from file, then filter them using provided command line arguments.
-     * @param input Input file.
      * @return Resulting list of filtered lines.
-     * @throws IOException Throws if errors occurred while reading file.
      */
-    private List<String> run(File input) throws IOException {
-        try (BufferedReader br = new BufferedReader(new FileReader(input))) {
-            List<String> lines = new ArrayList<>();
-            List<String> result = new ArrayList<>();
-            String currentLine = br.readLine();
+    public List<String> calculate() {
+        try {
+            try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+                List<String> lines = new ArrayList<>();
+                List<String> result = new ArrayList<>();
+                String currentLine = br.readLine();
 
-            while (currentLine != null) {
-                lines.add(currentLine);
-                currentLine = br.readLine();
-            }
-
-            if (useRegexFlag) {
-                Pattern pattern = Pattern.compile(filter);
-                for (String line : lines) {
-                    Matcher matcher = pattern.matcher(line);
-                    if (useReversedFlag(matcher.find())) {
-                        result.add(line);
-                    }
+                while (currentLine != null) {
+                    lines.add(currentLine);
+                    currentLine = br.readLine();
                 }
-            } else {
-                if (useIgnoredCaseFlag) {
-                    String filterLowered = filter.toLowerCase();
+
+                if (useRegexFlag) {
+                    Pattern pattern = Pattern.compile(filter);
                     for (String line : lines) {
-                        String lineLowered = line.toLowerCase();
-                        if (useReversedFlag(lineLowered.contains(filterLowered))) {
-                            result.add(line);
-                        }
+                        Matcher matcher = pattern.matcher(line);
+                        addConsideringReversedFlag(matcher.find(), result, line);
                     }
                 } else {
-                    for (String line : lines) {
-                        if (useReversedFlag(line.contains(filter))) {
-                            result.add(line);
+                    if (useIgnoredCaseFlag) {
+                        String filterLowered = filter.toLowerCase();
+                        for (String line : lines) {
+                            String lineLowered = line.toLowerCase();
+                            addConsideringReversedFlag(lineLowered.contains(filterLowered), result, line);
+                        }
+                    } else {
+                        for (String line : lines) {
+                            addConsideringReversedFlag(line.contains(filter), result, line);
                         }
                     }
                 }
+                return result;
             }
-            return result;
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+            return new ArrayList<>();
         }
     }
 
@@ -111,22 +105,21 @@ public class Grep {
      * @param args Command line arguments.
      */
     public Grep(String[] args) {
+        changeArgs(args);
+    }
+
+    /**
+     * Parses command line arguments.
+     * @param args Command line arguments.
+     */
+    public void changeArgs(String[] args) {
         CmdLineParser parser = new CmdLineParser(this);
 
         try {
             parser.parseArgument(args);
-            this.result = run(file);
-        } catch (CmdLineException | IOException e) {
+        } catch (CmdLineException e) {
             System.err.println(e.getMessage());
         }
-    }
-
-    /**
-     * Grep result getter.
-     * @return Result of grep filtration.
-     */
-    public List<String> getResult() {
-        return this.result;
     }
 
     /**
@@ -134,8 +127,7 @@ public class Grep {
      * @param args Command line arguments.
      */
     public static void main(String[] args) {
-        Grep gr = new Grep(args);
-        List<String> list = gr.getResult();
+        List<String> list = new Grep(args).calculate();
         for (String s : list) {
             System.out.println(s);
         }
