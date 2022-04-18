@@ -65,7 +65,7 @@ class GrepTest {
         String[] args = {"-r", "-i", "[1-9]", "./src/test/resources/input_test.txt"};
         List<String> expected = new ArrayList<>();
         expected.add("Maria number 1.");
-        assertEquals(expected, new Grep(args).calculate());
+        assertThrows(IllegalArgumentException.class, () -> new Grep(args).calculate());
     }
 
     /**
@@ -96,15 +96,15 @@ class GrepTest {
      */
     @Test
     void testMultipleGrepInstanceCalls() {
-        String[] args_first = {"is", "./src/test/resources/input_test.txt"};
+        String[] argsFirst = {"is", "./src/test/resources/input_test.txt"};
         List<String> expected = new ArrayList<>();
         expected.add("She is very beautiful and loving.");
         expected.add("maria is the kindest and the purest person I know");
-        Grep gr = new Grep(args_first);
+        Grep gr = new Grep(argsFirst);
         assertEquals(expected, gr.calculate());
 
-        String[] args_second = {"really", "./src/test/resources/input_test.txt"};
-        gr.changeArgs(args_second);
+        String[] argsSecond = {"really", "./src/test/resources/input_test.txt"};
+        gr.changeArgs(argsSecond);
         expected.clear();
         expected.add("I do really love Maria.");
         assertEquals(expected, gr.calculate());
@@ -116,6 +116,6 @@ class GrepTest {
     @Test
     void testWithNonExistentFile() {
         String[] args = {"Maria", "./src/test/resources/non_existent_input.txt"};
-        assertEquals(new ArrayList<>(), new Grep(args).calculate());
+        assertThrows(IllegalArgumentException.class, () -> new Grep(args).calculate());
     }
 }

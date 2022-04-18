@@ -59,47 +59,44 @@ public class Grep {
 
     /**
      * Read lines from file, then filter them using provided command line arguments.
+     * @throws IllegalArgumentException Throws if errors occurred while reaching selected file.
      * @return Resulting list of filtered lines.
      */
     public List<String> calculate() {
-        try {
-            try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-                List<String> lines = new ArrayList<>();
-                List<String> result = new ArrayList<>();
-                String currentLine = br.readLine();
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            List<String> lines = new ArrayList<>();
+            List<String> result = new ArrayList<>();
+            String currentLine = br.readLine();
 
-                while (currentLine != null) {
-                    lines.add(currentLine);
-                    currentLine = br.readLine();
+            while (currentLine != null) {
+                lines.add(currentLine);
+                currentLine = br.readLine();
+            }
+
+            if (useRegexFlag) {
+                Pattern pattern = Pattern.compile(filter);
+                for (String line : lines) {
+                    Matcher matcher = pattern.matcher(line);
+                    addConsideringReversedFlag(matcher.find(), result, line);
                 }
-
-                if (useRegexFlag) {
-                    Pattern pattern = Pattern.compile(filter);
+            } else {
+                if (useIgnoredCaseFlag) {
+                    String filterLowered = filter.toLowerCase();
                     for (String line : lines) {
-                        Matcher matcher = pattern.matcher(line);
-                        addConsideringReversedFlag(matcher.find(), result, line);
+                        String lineLowered = line.toLowerCase();
+                        addConsideringReversedFlag(lineLowered.contains(filterLowered), result, line);
                     }
                 } else {
-                    if (useIgnoredCaseFlag) {
-                        String filterLowered = filter.toLowerCase();
-                        for (String line : lines) {
-                            String lineLowered = line.toLowerCase();
-                            addConsideringReversedFlag(lineLowered.contains(filterLowered), result, line);
-                        }
-                    } else {
-                        for (String line : lines) {
-                            addConsideringReversedFlag(line.contains(filter), result, line);
-                        }
+                    for (String line : lines) {
+                        addConsideringReversedFlag(line.contains(filter), result, line);
                     }
                 }
-                return result;
             }
+            return result;
         } catch (IOException e) {
-            System.err.println(e.getMessage());
-            return new ArrayList<>();
+            throw new IllegalArgumentException(e.getMessage());
         }
     }
-
     /**
      * Constructor from command line arguments.
      * @param args Command line arguments.
@@ -110,15 +107,15 @@ public class Grep {
 
     /**
      * Parses command line arguments.
+     * @throws IllegalArgumentException Throws if errors occurred while parsing command line arguments.
      * @param args Command line arguments.
      */
     public void changeArgs(String[] args) {
         CmdLineParser parser = new CmdLineParser(this);
-
         try {
             parser.parseArgument(args);
         } catch (CmdLineException e) {
-            System.err.println(e.getMessage());
+            throw new IllegalArgumentException(e.getMessage());
         }
     }
 
