@@ -97,6 +97,7 @@ public class Grep {
             throw new IllegalArgumentException(e.getMessage());
         }
     }
+
     /**
      * Constructor from command line arguments.
      * @param args Command line arguments.

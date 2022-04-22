@@ -2,6 +2,9 @@ package coursework.sem2.t2;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,12 +14,14 @@ import static org.junit.jupiter.api.Assertions.*;
  * Grep tests class
  */
 class GrepTest {
+    String testFilePath = getClass().getClassLoader().getResource("input_test.txt").getPath();
+
     /**
      * Test Grep with no console options.
      */
     @Test
     void testWithNoOptions() {
-        String[] args = {"maria", "./src/test/resources/input_test.txt"};
+        String[] args = {"maria", testFilePath};
         List<String> expected = new ArrayList<>();
         expected.add("maria is the kindest and the purest person I know");
         assertEquals(expected, new Grep(args).calculate());
@@ -27,7 +32,7 @@ class GrepTest {
      */
     @Test
     void testReversedFlag() {
-        String[] args = {"-v", ".", "./src/test/resources/input_test.txt"};
+        String[] args = {"-v", ".", testFilePath};
         List<String> expected = new ArrayList<>();
         expected.add("maria is the kindest and the purest person I know");
         expected.add("Maria");
@@ -39,7 +44,7 @@ class GrepTest {
      */
     @Test
     void testIgnoredCaseFlag() {
-        String[] args = {"-i", "G", "./src/test/resources/input_test.txt"};
+        String[] args = {"-i", "G", testFilePath};
         List<String> expected = new ArrayList<>();
         expected.add("She is very beautiful and loving.");
         expected.add("String three words.");
@@ -51,7 +56,7 @@ class GrepTest {
      */
     @Test
     void testRegexFlag() {
-        String[] args = {"-r", "[1-9]", "./src/test/resources/input_test.txt"};
+        String[] args = {"-r", "[1-9]", testFilePath};
         List<String> expected = new ArrayList<>();
         expected.add("Maria number 1.");
         assertEquals(expected, new Grep(args).calculate());
@@ -62,7 +67,7 @@ class GrepTest {
      */
     @Test
     void testRegexAndIgnoreFlagsIncompatibility() {
-        String[] args = {"-r", "-i", "[1-9]", "./src/test/resources/input_test.txt"};
+        String[] args = {"-r", "-i", "[1-9]", testFilePath};
         List<String> expected = new ArrayList<>();
         expected.add("Maria number 1.");
         assertThrows(IllegalArgumentException.class, () -> new Grep(args).calculate());
@@ -73,7 +78,7 @@ class GrepTest {
      */
     @Test
     void testEmptyStringArgument() {
-        String[] args = {"", "./src/test/resources/input_test.txt"};
+        String[] args = {"", testFilePath};
         Grep gr = new Grep(args);
         List<String> expected = new ArrayList<>();
         expected.add("I do really love Maria.");
@@ -83,11 +88,11 @@ class GrepTest {
         expected.add("Maria");
         expected.add("String three words.");
         assertEquals(expected, gr.calculate());
-        gr.changeArgs(new String[]{"-i", "", "./src/test/resources/input_test.txt"});
+        gr.changeArgs(new String[]{"-i", "", testFilePath});
         assertEquals(expected, gr.calculate());
-        gr.changeArgs(new String[]{"-v", "", "./src/test/resources/input_test.txt"});
+        gr.changeArgs(new String[]{"-v", "", testFilePath});
         assertEquals(new ArrayList<>(), gr.calculate());
-        gr.changeArgs(new String[]{"-i", "-v", "", "./src/test/resources/input_test.txt"});
+        gr.changeArgs(new String[]{"-i", "-v", "", testFilePath});
         assertEquals(new ArrayList<>(), gr.calculate());
     }
 
@@ -96,14 +101,14 @@ class GrepTest {
      */
     @Test
     void testMultipleGrepInstanceCalls() {
-        String[] argsFirst = {"is", "./src/test/resources/input_test.txt"};
+        String[] argsFirst = {"is", testFilePath};
         List<String> expected = new ArrayList<>();
         expected.add("She is very beautiful and loving.");
         expected.add("maria is the kindest and the purest person I know");
         Grep gr = new Grep(argsFirst);
         assertEquals(expected, gr.calculate());
 
-        String[] argsSecond = {"really", "./src/test/resources/input_test.txt"};
+        String[] argsSecond = {"really", testFilePath};
         gr.changeArgs(argsSecond);
         expected.clear();
         expected.add("I do really love Maria.");
@@ -115,7 +120,7 @@ class GrepTest {
      */
     @Test
     void testWithNonExistentFile() {
-        String[] args = {"Maria", "./src/test/resources/non_existent_input.txt"};
+        String[] args = {"Maria", "VI:/coursework_sem2_t2/this_doesnt_exis.txt"};
         assertThrows(IllegalArgumentException.class, () -> new Grep(args).calculate());
     }
 }
